@@ -1,0 +1,3 @@
+#+TITLE: Dorg
+Documentation tool to take
+Lisp->org->{MD (hugo), latex etc}
