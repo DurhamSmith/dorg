@@ -55,26 +55,19 @@ sec: keyword"
      ((null match) (nreverse all))))
 
 
-(defun get-definitions (dw)
-  "Take a doc-writer and returns a nested list list like
-(('section-name' 'file-name' ('(defun ...)' '(defclass ...)'))"
-  (mapcar #'(lambda (sec files)
-                (mapcar #'(lambda (file-path)
-                            (list (keyword->string sec)
-                                  (file-namestring file-path)
-                                  (all-toplevel-forms file-path)))
-                        files))
-                (serapeum:plist-keys  (sections dw))
-                (serapeum:plist-values (sections dw))))
+
 
 
 (defun allowedp (allowed def)
   "allowed: list of things we want included
  def: string of the definition"
   (dolist (a allowed) nil
-    (when (string-equal a
-                      (subseq def 1 (1+ (length a))))
-                    (return t))))
+    (let ((alen (length a)))
+      (when (and
+             (> (length def) alen)
+             (string-equal a
+                           (subseq def 1 (1+ (length a)))))
+        (return t)))))
 
 
 (defun filter-definitions (allowed definitions)
@@ -85,13 +78,21 @@ sec: keyword"
                      )
                  definitions))
 
+(defun get-definitions (dw)
+  "Take a doc-writer and returns a nested list list like
+(('section-name' 'file-name' ('(defun ...)' '(defclass ...)'))
+that tracks the section, filename and all definitions it (track dw)"
+  (mapcar #'(lambda (sec files)
+                (mapcar #'(lambda (file-path)
+                            (list (keyword->string sec)
+                                  (file-namestring file-path)
+                                  (filter-definitions (track dw) (all-toplevel-forms file-path)))) ; We filter all the forms here because I scratch a lot when developing and I dont want those formss here
+                        files))
+                (serapeum:plist-keys  (sections dw))
+                (serapeum:plist-values (sections dw))))
 
 
-
-
-(filter-definitions  (track dw) (third (first (second (get-definitions dw)))))
-
-(string-equal "a" "A")
+(get-definitions dw)
 
 (defun write-section (dw sec)
   "dw: dorg:doc-writer
@@ -102,17 +103,19 @@ sec: keyword"
 (defun definitions-from-file (path))
 
 
+(defun document-defun (form)
+  "Take a defun form and returns a string to be written")
 
 
 
 
-
-
-
-
-
-
-
+(defclass/std form-parser ()
+  ((name :doc "The name of the form")
+   (args :doc "The args of the form")
+   (docs :doc "The documentation of the form")
+   (body :doc "The body of the form")
+   (type :doc "The type of form this is")
+   ))
 
 
 
