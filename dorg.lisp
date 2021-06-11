@@ -1,8 +1,5 @@
-(in-package :defclass-std)
+(in-package :dorg)
 
-(ql:quickload '(:defclass-std :serapeum :alexandria :recursive-regex))
-(ql:quickload :serapeum )
-(ql:quickload :recu )
 (defun keyword->string (k)
   (subseq (write-to-string k) 1))
 
@@ -20,39 +17,38 @@ sec: keyword"
   ((sections :doc "A p-list with keys being sections names and values being an order list of files to generate docs for that section")
    (hugo-base-dir :doc "The root folder of the hugo site, docs will go to /content/:sec/filename ")
    (track :std '("defclass" "defmethod" "defgeneric" "defun" "defparameter") "A list of strings of the types of things we generate documentation for")
-))
+   ))
 
 
 
 
 (setf dw (make-instance 'doc-writer
-               :sections '(:core ("/home/dd/quicklisp/local-projects/small/src/core/chem-obj.lisp"
-                                  "/home/dd/quicklisp/local-projects/small/src/core/ht-helpers.lisp"
-                                  "/home/dd/quicklisp/local-projects/small/src/core/linear-algebra.lisp"
-                                  "/home/dd/quicklisp/local-projects/small/src/core/utils.lisp")
-                           :dna  ("/home/dd/quicklisp/local-projects/small/src/dna/dna.lisp"
-                                   "/home/dd/quicklisp/local-projects/small/src/dna/dna-helix-strand.lisp"
-                                   "/home/dd/quicklisp/local-projects/small/src/dna/dna-nt.lisp"
-                                   "/home/dd/quicklisp/local-projects/small/src/dna/dna-origami.lisp"
-                                   "/home/dd/quicklisp/local-projects/small/src/dna/dna-single-strand.lisp"
-                                   "/home/dd/quicklisp/local-projects/small/src/dna/dna-strand.lisp"
-                                   "/home/dd/quicklisp/local-projects/small/src/dna/packages.lisp"))))
+                        :sections '(:core ("/home/dd/quicklisp/local-projects/small/src/core/chem-obj.lisp"
+                                           "/home/dd/quicklisp/local-projects/small/src/core/ht-helpers.lisp"
+                                           "/home/dd/quicklisp/local-projects/small/src/core/linear-algebra.lisp"
+                                           "/home/dd/quicklisp/local-projects/small/src/core/utils.lisp")
+                                    :dna  ("/home/dd/quicklisp/local-projects/small/src/dna/dna.lisp"
+                                           "/home/dd/quicklisp/local-projects/small/src/dna/dna-helix-strand.lisp"
+                                           "/home/dd/quicklisp/local-projects/small/src/dna/dna-nt.lisp"
+                                           "/home/dd/quicklisp/local-projects/small/src/dna/dna-origami.lisp"
+                                           "/home/dd/quicklisp/local-projects/small/src/dna/dna-single-strand.lisp"
+                                           "/home/dd/quicklisp/local-projects/small/src/dna/dna-strand.lisp"
+                                           "/home/dd/quicklisp/local-projects/small/src/dna/packages.lisp"))))
 
 
 
 
 (defun all-toplevel-forms (path)
   "Takes a path, returns all top level forms"
-    (do* ((start 0 (recursive-regex::end match))
-      (s (uiop:read-file-string path)
-         (subseq s start))
-      (match (recursive-regex::regex-recursive-groups "(?<parens>)" s)
-        (recursive-regex::regex-recursive-groups "(?<parens>)" s))
-      (all nil (progn (format t "AWE")
-                      (if match
-                          (push (recursive-regex::full-match match) all)
-                          all))))
-     ((null match) (nreverse all))))
+  (do* ((start 0 (recursive-regex::end match))
+        (s (uiop:read-file-string path)
+           (subseq s start))
+        (match (recursive-regex::regex-recursive-groups "(?<parens>)" s)
+          (recursive-regex::regex-recursive-groups "(?<parens>)" s))
+        (all nil (if match
+                     (push (recursive-regex::full-match match) all)
+                     all)))
+       ((null match) (nreverse all))))
 
 
 
@@ -92,7 +88,8 @@ that tracks the section, filename and all definitions it (track dw)"
                 (serapeum:plist-values (sections dw))))
 
 
-(get-definitions dw)
+
+
 
 (defun write-section (dw sec)
   "dw: dorg:doc-writer
@@ -109,13 +106,6 @@ sec: keyword"
 
 
 
-(defclass/std form-parser ()
-  ((name :doc "The name of the form")
-   (args :doc "The args of the form")
-   (docs :doc "The documentation of the form")
-   (body :doc "The body of the form")
-   (type :doc "The type of form this is")
-   ))
 
 
 
