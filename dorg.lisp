@@ -8,10 +8,6 @@
 sec: keyword"
   (getf (sections dw) sec))
 
-;; We can use file-namestring instead
-;; (defun file-name (path-ish)
-;;   "Get the file name only, removing directories"
-;;   (car (last (uiop:split-string path-ish :separator "/"))))
 
 (defclass/std doc-writer ()
   ((sections :doc "A p-list with keys being sections names and values being an order list of files to generate docs for that section")
@@ -20,20 +16,23 @@ sec: keyword"
    ))
 
 
-
-
-(setf dw (make-instance 'doc-writer
-                        :sections '(:core ("/home/dd/quicklisp/local-projects/small/src/core/chem-obj.lisp"
-                                           "/home/dd/quicklisp/local-projects/small/src/core/ht-helpers.lisp"
-                                           "/home/dd/quicklisp/local-projects/small/src/core/linear-algebra.lisp"
-                                           "/home/dd/quicklisp/local-projects/small/src/core/utils.lisp")
-                                    :dna  ("/home/dd/quicklisp/local-projects/small/src/dna/dna.lisp"
-                                           "/home/dd/quicklisp/local-projects/small/src/dna/dna-helix-strand.lisp"
-                                           "/home/dd/quicklisp/local-projects/small/src/dna/dna-nt.lisp"
-                                           "/home/dd/quicklisp/local-projects/small/src/dna/dna-origami.lisp"
-                                           "/home/dd/quicklisp/local-projects/small/src/dna/dna-single-strand.lisp"
-                                           "/home/dd/quicklisp/local-projects/small/src/dna/dna-strand.lisp"
-                                           "/home/dd/quicklisp/local-projects/small/src/dna/packages.lisp"))))
+(progn
+(setf dwo (make-instance 'doc-writer
+                        :sections '(:source ("/home/dd/quicklisp/local-projects/dorg/dorg.lisp"
+                                           "/home/dd/quicklisp/local-projects/dorg/parser.lisp"))))
+(setq dwds (third  (caar (get-definitions dwo)))))
+;; (setf dw (make-instance 'doc-writer
+;;                         :sections '(:core ("/home/dd/quicklisp/local-projects/small/src/core/chem-obj.lisp"
+;;                                            "/home/dd/quicklisp/local-projects/small/src/core/ht-helpers.lisp"
+;;                                            "/home/dd/quicklisp/local-projects/small/src/core/linear-algebra.lisp"
+;;                                            "/home/dd/quicklisp/local-projects/small/src/core/utils.lisp")
+;;                                     :dna  ("/home/dd/quicklisp/local-projects/small/src/dna/dna.lisp"
+;;                                            "/home/dd/quicklisp/local-projects/small/src/dna/dna-helix-strand.lisp"
+;;                                            "/home/dd/quicklisp/local-projects/small/src/dna/dna-nt.lisp"
+;;                                            "/home/dd/quicklisp/local-projects/small/src/dna/dna-origami.lisp"
+;;                                            "/home/dd/quicklisp/local-projects/small/src/dna/dna-single-strand.lisp"
+;;                                            "/home/dd/quicklisp/local-projects/small/src/dna/dna-strand.lisp"
+;;                                            "/home/dd/quicklisp/local-projects/small/src/dna/packages.lisp"))))
 
 
 
@@ -49,7 +48,6 @@ sec: keyword"
                      (push (recursive-regex::full-match match) all)
                      all)))
        ((null match) (nreverse all))))
-
 
 
 
@@ -76,7 +74,7 @@ sec: keyword"
 
 (defun get-definitions (dw)
   "Take a doc-writer and returns a nested list list like
-(('section-name' 'file-name' ('(defun ...)' '(defclass ...)'))
+
 that tracks the section, filename and all definitions it (track dw)"
   (mapcar #'(lambda (sec files)
                 (mapcar #'(lambda (file-path)
@@ -91,17 +89,71 @@ that tracks the section, filename and all definitions it (track dw)"
 
 
 
-(defun write-section (dw sec)
+(get-form-name (first dwds))
+
+(defun add-def-to-ht (def ht)
+  "Add"
+  (let ((defs (gethash (get-form-type def) ht)))
+        ;(break "~A~%~A" (get-form-type def) def)
+    (if defs
+      (setf (gethash (get-form-type def) ht)  (append def defs))
+      (setf (gethash (get-form-type def) ht) (list def)))))
+
+
+(defun group-forms (forms)
+  "forms: list of top level defintion forms
+order: list of strings that define the order of the grouping
+"
+  (let ((groups (make-hash-table :test 'equalp)))
+    (mapcar #'(lambda (form)
+                (add-def-to-ht form groups))
+            forms)
+    groups))
+
+(group-forms dwds)
+
+
+)))))
+
+
+(track dwo)
+
+
+
+
+
+(defun write-section (sec-spec)
   "dw: dorg:doc-writer
 sec: keyword"
-      )
+  (let ((title (format nil "#+title ~A" (second sec-spec))) ;; second is the file title
+        (hugo-sec (format nil "#+HUGO_SECTION: ~A" (first sec-spec)))) ;; first is the section title
+  (format nil "~A" (third sec-spec) )
+      ))
+
+
+
+(defun document-system (dw)
+  "Writes the documentation"
+
+  (mapcar #'(lambda (section)
+              (mapcar #'(lambda (sec-spec)
+                     ;;     (break "~A" sec-spec)
+                          (write-section sec-spec))
+                      section))
+          (get-definitions dw))
+)
+
+(document-system dwo)
+
+
 
 
 (defun definitions-from-file (path))
 
 
 (defun document-defun (form)
-  "Take a defun form and returns a string to be written")
+  "Take a defun form and returns a string to be written"
+  (car (get-definitions dwo)))
 
 
 

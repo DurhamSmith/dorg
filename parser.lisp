@@ -1,4 +1,5 @@
 (in-package :dorg)
+(setf str (nth 1 (third (caar (get-definitions dwo)))))
 
 (defclass/std form-parser ()
   ((name :doc "The name of the form")
@@ -14,17 +15,18 @@
 (defclass/std defun-parser (form-parser)
   ((form-type :std "defun")
    (template :doc "A template for the string that the parser will produce"
-             :std "Function ~A ~A~%~A~% \~{{< expand \"Source\" \"...\" >}}{{< /expand >}}")))
+             :std "Function ~A ~A~% ~~~A~~~%  {{< expand \"Source\" \"...\" >}}~A{{< /expand >}}")))
 
+;;(get-doc (parse (make-instance 'defun-parser) str))
 
 (defun get-doc (parser)
   "Returns a string formatted ready for org"
   (with-slots ((name name) (args args) (doc doc) (body body) (template template)) parser
-    (format nil template name args doc body))
+    (format nil template name args doc body)))
 
 
-(setf str (nth 1 (third (caar (get-definitions dw)))))
-(get-doc (parse (make-instance 'defun-parser) str))
+
+
 
 
 (defun remove-leading-char (s &key (num 1))
@@ -46,17 +48,17 @@
 (defun get-form-name (form)
  (second (uiop::split-string form)))
 
-
-
+(defun get-form-type (form)
+  (first (uiop::split-string (remove-leading-char (car dwds)))))
 
 (defun get-form-body (form)
-  (multiple-value-bind (args end) (get-form-args form)
+  (multiple-value-bind (args end) (get-form-args form)d
     (recursive-regex::full-match
      (recursive-regex::regex-recursive-groups
                 "(?<parens>)"
                 (remove-leading-char form :num end)))))
 
-(get-form-body str)
+;;(get-form-body str)
 
 
 (defun get-form-docs (form)
@@ -73,7 +75,7 @@
   fp)
 
 
-(get-doc (parse (make-instance 'defun-parser) str))
+;;(get-doc (parse (make-instance 'defun-parser) str))
 ;; (get-form-args str)
 ;; (get-form-name str)
 ;; (get-form-docs str)
