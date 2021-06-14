@@ -12,14 +12,17 @@ sec: keyword"
 (defclass/std doc-writer ()
   ((sections :doc "A p-list with keys being sections names and values being an order list of files to generate docs for that section")
    (hugo-base-dir :doc "The root folder of the hugo site, docs will go to /content/:sec/filename ")
-   (track :std '("defclass" "defmethod" "defgeneric" "defun" "defparameter") "A list of strings of the types of things we generate documentation for")
+   ;(track :std '("defclass/std" "defmethod" "defgeneric" "defun" "defparameter") "A list of strings of the types of things we generate documentation for")
+   (track :std '("defun") "A list of strings of the types of things we generate documentation for")
+   (output-dir :std "/home/dd/tmp/dorg/")
    ))
 
 
 (progn
 (setf dwo (make-instance 'doc-writer
                         :sections '(:source ("/home/dd/quicklisp/local-projects/dorg/dorg.lisp"
-                                           "/home/dd/quicklisp/local-projects/dorg/parser.lisp"))))
+                                           "/home/dd/quicklisp/local-projects/dorg/parser.lisp"))
+                        :hugo-base-dir "/home/dd/dev/dorg"))
 (setq dwds (third  (caar (get-definitions dwo)))))
 ;; (setf dw (make-instance 'doc-writer
 ;;                         :sections '(:core ("/home/dd/quicklisp/local-projects/small/src/core/chem-obj.lisp"
@@ -112,34 +115,54 @@ that tracks the section, filename and all definitions it (track dw)"
 
 
 
-(defun format-section-file (sec-spec
-                            &key (track '("defun")) ;; (track '("defclass" "defmethod" "defgeneric" "defun" "defparameter"))
-                              )
+(defun format-section-file (dw sec-spec)
   "Takes a list with first entry the section title,
 second entry the file name and
 third a ht with key = form type, vals = ordered list of forms"
-  (let* ((title (format nil "#+title ~A" (second sec-spec))) ;; second is the file title
+  (let* ((title (format nil "#+title: ~A" (second sec-spec))) ;; second is the file title
          (hugo-sec (format nil "#+HUGO_SECTION: ~A" (first sec-spec))) ;; first is the section title
+         (hugo-base-dir (format nil "#+HUGO_BASE_DIR: ~A" (hugo-base-dir dw)))
          (defs (third sec-spec))
          (parser (make-instance 'form-parser))
          (docs (mapcar #'(lambda (form-type)
                            (mapcar #'(lambda (def)
-                                       (break "def: ~A " def )
-                                       (parse parser def))
+                                        ;         (break "def: ~A " def )
+                                       (get-doc (parse parser def)))
                                    (gethash form-type defs)))
-                       track)))))
+                       (track dw))))
+    ;(break docs)
+    (alexandria:flatten (list
+                         title
+                         hugo-base-dir
+                         hugo-sec
+                         docs))))
 
 (document-system dwo)
 
+(defun write-section-file (dw l)
+  "l: A list of strings"
+  (let ((output-file-name (concatenate 'string
+                                       (output-dir dw)
+                                       (first (uiop:split-string (second (uiop:split-string (first l) :separator " ")) :separator  "."))
+                                       ".org")))
+    (with-open-file (out output-file-name
+                         :direction :output :if-exists :overwrite :if-does-not-exist :create)
+      (dolist (line l)
+        (format out "~A~%" line)))))
 
-(defun write-section (sec-specs &key (track '("defclass" "defmethod" "defgeneric" "defun" "defparameter")))
+
+
+(defun write-section (dw sec-specs)
   "dw: dorg:doc-writer
 sec: keyword"
   ;;(break sec-specs)
-  (mapcar #'(lambda (sec-spec)
-                     ;;     (break "~A" sec-spec)
-                          (mapcar #'format-section-file sec-specs))
-                      sec-specs))
+  (let ((sec-info (mapcar #'(lambda (sec-spec)
+                              (format-section-file dw sec-spec))
+                          sec-specs)))
+    (mapcar #'(lambda (sec)
+                (write-section-file dw sec))
+            sec-info)
+    sec-info))
 
 (document-system dwo)
 
@@ -147,29 +170,11 @@ sec: keyword"
 (defun document-system (dw)
   "Writes the documentation"
   (mapcar #'(lambda (sec-specs)
-              (write-section sec-specs))
+              (write-section dw sec-specs))
           (get-definitions dw)))
 
 
-(document-system dwo)
+
 (get-definitions dwo)
 
 
-
-(defun definitions-from-file (path)
-"awe"
-  (+ 1 2))
-
-
-(defun document-defun (form)
-  "Take a defun form and returns a string to be written"
-  (car (get-definitions dwo)))
-
-
-
-
-
-
-
-;; (all-matches-as-strings "\((?:[^)(]*(?:R)?)* +\)"
-;;                         (uiop:read-file-string "/home/dd/quicklisp/local-projects/small/src/core/chem-obj.lisp"))

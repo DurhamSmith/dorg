@@ -9,7 +9,7 @@
    (form-type :doc "The type of form this is")
    ;; (template :doc "A template for the string that the parser will produce")
    (template :doc "A template for the string that the parser will produce"
-             :std "*  Function ~A ~A~% ~~~A~~~% {{< expand \"SRC\" \"...\" >}}{{< highlight common-lisp "linenos=table" >}}~%~A{{< /expand >}}")
+             :std "*  function  ~A ~A~% ~~~A~~~% {{< expand \"SRC\" >}}{{< highlight common-lisp \"linenos=table\" >}}~%~A{{< /highlight >}}{{< /expand >}}")
    ))
 
 
@@ -17,14 +17,18 @@
 (defclass/std defun-parser (form-parser)
   ((form-type :std "defun")
    (template :doc "A template for the string that the parser will produce"
-             :std "Function ~A ~A~% ~~~A~~~% {{< expand \"SRC\" \"...\" >}}{{< highlight common-lisp "linenos=table" >}}~%~A{{< /expand >}}")))
+             :std "Function ~A ~A~% ~~~A~~~% {{< expand \"SRC\" \"...\" >}}{{< highlight common-lisp >}}~%~A{{< /expand >}}")))
 
 ;;(get-doc (parse (make-instance 'defun-parser) str))
 
 (defun get-doc (parser)
   "Returns a string formatted ready for org"
   (with-slots ((name name) (args args) (doc doc) (body body) (template template)) parser
-    (format nil template name args doc body)))
+    (format nil template
+            (string-upcase name)
+            (string-upcase args)
+            doc
+            body)))
 
 
 
