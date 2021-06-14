@@ -72,6 +72,27 @@ sec: keyword"
                      )
                  definitions))
 
+(defun add-def-to-ht (def ht)
+  "Add"
+  (let ((defs (gethash (get-form-type def) ht)))
+        ;(break "~A~%~A" (get-form-type def) def)
+    (if defs
+      (setf (gethash (get-form-type def) ht) (append defs (list def)))
+      (setf (gethash (get-form-type def) ht) (list def)))))
+
+
+(defun group-forms (forms)
+  "forms: list of top level defintion forms
+order: list of strings that define the order of the grouping
+returns: hash-table, key=form-type, val = ordered list of strings of the form (by appearance in the file)
+"
+  (let ((groups (make-hash-table :test 'equalp)))
+    (mapcar #'(lambda (form)
+                (add-def-to-ht form groups))
+            forms)
+    (alexandria:maphash-values )
+    groups))
+
 (defun get-definitions (dw)
   "Take a doc-writer and returns a nested list list like
 
@@ -80,7 +101,10 @@ that tracks the section, filename and all definitions it (track dw)"
                 (mapcar #'(lambda (file-path)
                             (list (keyword->string sec)
                                   (file-namestring file-path)
-                                  (filter-definitions (track dw) (all-toplevel-forms file-path)))) ; We filter all the forms here because I scratch a lot when developing and I dont want those formss here
+                                  (group-forms
+                                   (filter-definitions
+                                    (track dw)
+                                    (all-toplevel-forms file-path))))) ; We filter all the forms here because I scratch a lot when developing and I dont want those formss here
                         files))
                 (serapeum:plist-keys  (sections dw))
                 (serapeum:plist-values (sections dw))))
@@ -88,67 +112,53 @@ that tracks the section, filename and all definitions it (track dw)"
 
 
 
-
-(get-form-name (first dwds))
-
-(defun add-def-to-ht (def ht)
-  "Add"
-  (let ((defs (gethash (get-form-type def) ht)))
-        ;(break "~A~%~A" (get-form-type def) def)
-    (if defs
-      (setf (gethash (get-form-type def) ht)  (append def defs))
-      (setf (gethash (get-form-type def) ht) (list def)))))
-
-
-(defun group-forms (forms)
-  "forms: list of top level defintion forms
-order: list of strings that define the order of the grouping
-"
-  (let ((groups (make-hash-table :test 'equalp)))
-    (mapcar #'(lambda (form)
-                (add-def-to-ht form groups))
-            forms)
-    groups))
-
-(group-forms dwds)
-
-
-)))))
-
-
-(track dwo)
-
-
-
-
-
-(defun write-section (sec-spec)
-  "dw: dorg:doc-writer
-sec: keyword"
-  (let ((title (format nil "#+title ~A" (second sec-spec))) ;; second is the file title
-        (hugo-sec (format nil "#+HUGO_SECTION: ~A" (first sec-spec)))) ;; first is the section title
-  (format nil "~A" (third sec-spec) )
-      ))
-
-
-
-(defun document-system (dw)
-  "Writes the documentation"
-
-  (mapcar #'(lambda (section)
-              (mapcar #'(lambda (sec-spec)
-                     ;;     (break "~A" sec-spec)
-                          (write-section sec-spec))
-                      section))
-          (get-definitions dw))
-)
+(defun format-section-file (sec-spec
+                            &key (track '("defun")) ;; (track '("defclass" "defmethod" "defgeneric" "defun" "defparameter"))
+                              )
+  "Takes a list with first entry the section title,
+second entry the file name and
+third a ht with key = form type, vals = ordered list of forms"
+  (let* ((title (format nil "#+title ~A" (second sec-spec))) ;; second is the file title
+         (hugo-sec (format nil "#+HUGO_SECTION: ~A" (first sec-spec))) ;; first is the section title
+         (defs (third sec-spec))
+         (parser (make-instance 'form-parser))
+         (docs (mapcar #'(lambda (form-type)
+                           (mapcar #'(lambda (def)
+                                       (break "def: ~A " def )
+                                       (parse parser def))
+                                   (gethash form-type defs)))
+                       track)))))
 
 (document-system dwo)
 
 
+(defun write-section (sec-specs &key (track '("defclass" "defmethod" "defgeneric" "defun" "defparameter")))
+  "dw: dorg:doc-writer
+sec: keyword"
+  ;;(break sec-specs)
+  (mapcar #'(lambda (sec-spec)
+                     ;;     (break "~A" sec-spec)
+                          (mapcar #'format-section-file sec-specs))
+                      sec-specs))
+
+(document-system dwo)
 
 
-(defun definitions-from-file (path))
+(defun document-system (dw)
+  "Writes the documentation"
+  (mapcar #'(lambda (sec-specs)
+              (write-section sec-specs))
+          (get-definitions dw)))
+
+
+(document-system dwo)
+(get-definitions dwo)
+
+
+
+(defun definitions-from-file (path)
+"awe"
+  (+ 1 2))
 
 
 (defun document-defun (form)

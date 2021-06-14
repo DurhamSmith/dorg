@@ -7,7 +7,9 @@
    (doc :doc "The documentation of the form")
    (body :doc "The body of the form")
    (form-type :doc "The type of form this is")
-   (template :doc "A template for the string that the parser will produce")
+   ;; (template :doc "A template for the string that the parser will produce")
+   (template :doc "A template for the string that the parser will produce"
+             :std "*  Function ~A ~A~% ~~~A~~~% {{< expand \"SRC\" \"...\" >}}{{< highlight common-lisp "linenos=table" >}}~%~A{{< /expand >}}")
    ))
 
 
@@ -15,7 +17,7 @@
 (defclass/std defun-parser (form-parser)
   ((form-type :std "defun")
    (template :doc "A template for the string that the parser will produce"
-             :std "Function ~A ~A~% ~~~A~~~%  {{< expand \"Source\" \"...\" >}}~A{{< /expand >}}")))
+             :std "Function ~A ~A~% ~~~A~~~% {{< expand \"SRC\" \"...\" >}}{{< highlight common-lisp "linenos=table" >}}~%~A{{< /expand >}}")))
 
 ;;(get-doc (parse (make-instance 'defun-parser) str))
 
@@ -48,11 +50,11 @@
 (defun get-form-name (form)
  (second (uiop::split-string form)))
 
-(defun get-form-type (form)
-  (first (uiop::split-string (remove-leading-char (car dwds)))))
+(defun get-form-type (form)g
+  (first (uiop::split-string (remove-leading-char  form))))
 
 (defun get-form-body (form)
-  (multiple-value-bind (args end) (get-form-args form)d
+  (multiple-value-bind (args end) (get-form-args form)
     (recursive-regex::full-match
      (recursive-regex::regex-recursive-groups
                 "(?<parens>)"
@@ -73,6 +75,7 @@
           doc (get-form-docs form)
           body (get-form-body form)))
   fp)
+
 
 
 ;;(get-doc (parse (make-instance 'defun-parser) str))
