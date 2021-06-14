@@ -10,5 +10,5 @@
   :serial T
   :depends-on (#:defclass-std #:alexandria #:serapeum #:recursive-regex)
   :components ((:file "packages")
-               (:file "dorg")
-               (:file "parser")))
+               (:file "parser")
+               (:file "dorg")))

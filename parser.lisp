@@ -1,5 +1,5 @@
 (in-package :dorg)
-(setf str (nth 1 (third (caar (get-definitions dwo)))))
+
 
 (defclass/std form-parser ()
   ((name :doc "The name of the form")
@@ -9,15 +9,15 @@
    (form-type :doc "The type of form this is")
    ;; (template :doc "A template for the string that the parser will produce")
    (template :doc "A template for the string that the parser will produce"
-             :std "*  function  ~A ~A~% ~~~A~~~% {{< expand \"SRC\" >}}{{< highlight common-lisp \"linenos=table\" >}}~%~A{{< /highlight >}}{{< /expand >}}")
+             :std "*  function  ~A ~A~%#+begin_src~%~A~%#+end_src~%{{< expand \"SRC\" >}}{{< highlight common-lisp \"linenos=table\" >}}~%~A~%{{< /highlight >}}{{< /expand >}}~%")
    ))
 
 
 
-(defclass/std defun-parser (form-parser)
-  ((form-type :std "defun")
-   (template :doc "A template for the string that the parser will produce"
-             :std "Function ~A ~A~% ~~~A~~~% {{< expand \"SRC\" \"...\" >}}{{< highlight common-lisp >}}~%~A{{< /expand >}}")))
+;; (defclass/std defun-parser (form-parser)
+;;   ((form-type :std "defun")
+;;    (template :doc "A template for the string that the parser will produce"
+;;              :std "Function ~A ~A~% ~~~A~~~% {{< expand \"SRC\" \"...\" >}}{{< highlight common-lisp >}}~%~A{{< /expand >}}")))
 
 ;;(get-doc (parse (make-instance 'defun-parser) str))
 
@@ -29,10 +29,6 @@
             (string-upcase args)
             doc
             body)))
-
-
-
-
 
 
 (defun remove-leading-char (s &key (num 1))
@@ -54,7 +50,8 @@
 (defun get-form-name (form)
  (second (uiop::split-string form)))
 
-(defun get-form-type (form)g
+
+(defun get-form-type (form)
   (first (uiop::split-string (remove-leading-char  form))))
 
 (defun get-form-body (form)
@@ -87,3 +84,4 @@
 ;; (get-form-name str)
 ;; (get-form-docs str)
 ;; (get-form-docs str)
+;(setf str (nth 1 (third (caar (get-definitions dwo)))))
